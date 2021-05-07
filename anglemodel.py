@@ -39,6 +39,7 @@ df=df.drop("vertical",axis=1)
 X = df.drop('horizontal', axis=1)
 y = df['horizontal']
 
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 # cat_features=["newkeys"]
 
@@ -90,7 +91,8 @@ df=df.drop("newkeys",axis=1)
 df=df.drop("horizontal",axis=1)
 X = df.drop('vertical', axis=1)
 y = df['vertical']
-
+print("DF BEFORE vert")
+print(df)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 # cat_features=["newkeys"]
 
@@ -106,10 +108,10 @@ cb_modelv = CatBoostRegressor(iterations=500,
                               od_wait=10,
                               learning_rate=0.0555
                               )
-cb_modelh.fit(X_train, y_train, verbose=0)
+cb_modelv.fit(X_train, y_train, verbose=0)
 
 
-
+cb_modelv.predict([13.637877,10208.093750,-558.515686])
 
 import time
 import pyautogui
@@ -142,16 +144,16 @@ def getpos(filenumber):
                 horizontal = angles[2]
                 keyspressed = key_check()
 
-            predicted = cb_modelh.predict(
-                [float(coordinates.X), float(coordinates.Y), float(coordinates.Z), float(coordinates.horizontal)])
-            difh=predicted-float(coordinates.horizontal)
 
-            predicted = cb_modelh.predict(
-                [float(coordinates.X), float(coordinates.Y), float(coordinates.Z), float(coordinates.vertical)])
-            difv = predicted - float(coordinates.vertical)
+            predictedh = cb_modelh.predict(
+                [float(coordinates.X), float(coordinates.Y), float(coordinates.Z)])
+            difh=float(coordinates.horizontal)-predictedh
 
-            #difh = float(coordinates.horizontal) - (-84.92)
-            #difv = float(coordinates.vertical) - (-1.6)
+
+            predictedv = cb_modelv.predict(
+                                [float(coordinates.X), float(coordinates.Y), float(coordinates.Z)])
+            difv = float(coordinates.vertical)-predictedv
+
 
             moveh = int(round(difh / 0.0176,0))
             movev = int(round(difv / 0.0176,0))
@@ -159,12 +161,12 @@ def getpos(filenumber):
             lrmoveh=int(round(moveh*0.3))
             lrmovev=int(round(movev*0.3))
 
-            print(moveh)
+
             keys.directMouse(lrmoveh, -lrmovev)
             time.sleep(0.004)
 
             print(coordinates.X, coordinates.Y, coordinates.Z, coordinates.horizontal, coordinates.vertical,
-                  coordinates.keyspressed, "PREDICTED:", round(predicted,2),"DIFh:",round(difh,2),"DIFv",round(difv,2))
+                  coordinates.keyspressed, "PREDICTEDh:", round(predictedh,2),"PREDICTEDv:", round(predictedv,2),"DIFh:",round(difh,2),"DIFv",round(difv,2))
 
 
         except:
@@ -188,6 +190,7 @@ for cnt in range(100):
     x = "go"
     while x != "stop":
         x = getpos(file_count)
+        time.sleep(3)
     end = time.time()
     duration = end - now
     print(duration)
