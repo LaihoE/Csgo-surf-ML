@@ -1,7 +1,7 @@
 import pandas as pd
-bigboi = pd.read_csv("C:/Users/emill/PycharmProjects/OWcheaters/newrecordings/cords5.csv")
-for i in range(10, 67):
-    df2=pd.read_csv(f"C:/Users/emill/PycharmProjects/OWcheaters/newrecordings/cords{i}.csv")
+bigboi = pd.read_csv("C:/Users/emill/PycharmProjects/OWcheaters/longrun/cords1.csv")
+for i in range(50, 106):
+    df2=pd.read_csv(f"C:/Users/emill/PycharmProjects/OWcheaters/longrun/cords{i}.csv")
     bigboi = pd.concat([bigboi, df2], ignore_index=True)
 
 
@@ -69,7 +69,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 print(df)
 
 
-cb_modelh = CatBoostRegressor(iterations=500,
+cb_modelh = CatBoostRegressor(iterations=2000,
                               depth=6,
                               task_type="CPU",
                               eval_metric='R2',
@@ -112,7 +112,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 # cat_features=["newkeys"]
 
 
-cb_modelv = CatBoostRegressor(iterations=500,
+cb_modelv = CatBoostRegressor(iterations=2000,
                               depth=6,
                               task_type="CPU",
                               eval_metric='R2',
@@ -136,6 +136,7 @@ df["newkeys"]=df["newkeys"].replace("F",42)
 df["newkeys"]=df["newkeys"].replace("Y",42)
 df["newkeys"]=df["newkeys"].replace("S",42)
 df["newkeys"]=df["newkeys"].replace("Q",42)
+df["newkeys"]=df["newkeys"].replace(" ",42)
 print(df)
 
 
@@ -253,7 +254,7 @@ with open(r"C:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global 
 now = time.time()
 print(now)
 x = "go"
-for game in range(100):
+for game in range(1000):
     print("WORKED")
     x = getpos(file_count)
     end = time.time()
