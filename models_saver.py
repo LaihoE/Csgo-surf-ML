@@ -1,20 +1,13 @@
 import pandas as pd
 bigboi = pd.read_csv("C:/Users/emill/PycharmProjects/OWcheaters/longrun/cords1.csv")
-for i in range(50, 106):
+for i in range(60, 106):
     df2=pd.read_csv(f"C:/Users/emill/PycharmProjects/OWcheaters/longrun/cords{i}.csv")
     bigboi = pd.concat([bigboi, df2], ignore_index=True)
 
-
-import pandas as pd
-from os import path
-import matplotlib.pyplot as plt
 from catboost import CatBoostRegressor
-from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
-import numpy as np
 from catboost import CatBoostClassifier
-import keys
-
+import pickle
 
 # GET OUT THE "P" THAT IS THE KEY FOR GETTING YOUR POSITION (NOT INTERESTED)
 df=bigboi
@@ -43,14 +36,8 @@ for i in df["newkeys"]:
 df["newkeys"] = biglist
 print(df)
 
-#used in next models
-
-
-
-
 df = df.drop("keys", axis=1)
 cleandf=df
-
 
 df["newkeys"] = df["newkeys"].replace("A", 0)
 df["newkeys"] = df["newkeys"].replace("W", 1)
@@ -64,7 +51,7 @@ X = df.drop('horizontal', axis=1)
 y = df['horizontal']
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.01, random_state=42)
 print(df)
 
 
@@ -86,14 +73,8 @@ random_search.fit(X_train,y_train,verbose=0)
 print(random_search.best_params_)
 print(random_search.best_score_)"""
 
-# r2
-y_pred = cb_modelh.predict(X_test)
-# r2test = r2_score(y_test, y_pred)
-# print("CatBoost r2:", r2test)
 
-prd = cb_modelh.predict([-112.442970, 6292.729492, 9989.057617, 94.806831, 30.937723])
-print(prd)
-##############################
+
 df=cleandf
 df["newkeys"] = df["newkeys"].replace("A", 0)
 df["newkeys"] = df["newkeys"].replace("W", 1)
@@ -107,11 +88,10 @@ X = df.drop('vertical', axis=1)
 y = df['vertical']
 print("DF BEFORE vert")
 print(df)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-# cat_features=["newkeys"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.01, random_state=42)
 
 
-cb_modelv = CatBoostRegressor(iterations=2000,
+cb_modelv = CatBoostRegressor(iterations=1000,
                               depth=6,
                               task_type="CPU",
                               eval_metric='R2',
@@ -124,9 +104,6 @@ cb_modelv = CatBoostRegressor(iterations=2000,
                               )
 cb_modelv.fit(X_train, y_train, verbose=0)
 
-
-cb_modelv.predict([13.637877,10208.093750,-558.515686])
-
 df=cleandf
 df["newkeys"]=df["newkeys"].replace("A",0)
 df["newkeys"]=df["newkeys"].replace("W",1)
@@ -138,13 +115,12 @@ df["newkeys"]=df["newkeys"].replace("Q",42)
 df["newkeys"]=df["newkeys"].replace(" ",42)
 print(df)
 
-
 X=df.drop('newkeys',axis=1)
 y=df['newkeys']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3,random_state=42)
-#cat_features=["newkeys"]
-print("Y")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.01,random_state=42)
+
+# Check if illegal values (0-2 only wanted)
 for i in y:
     if i != 0:
         if i != 1:
@@ -153,7 +129,7 @@ for i in y:
 
 
 
-cb_modelc = CatBoostClassifier(iterations=500,
+cb_modelc = CatBoostClassifier(iterations=1000,
                              depth=6,
                              task_type="CPU",
                              eval_metric='Accuracy',
@@ -166,8 +142,7 @@ cb_modelc = CatBoostClassifier(iterations=500,
                              )
 cb_modelc.fit(X_train, y_train, verbose=0)
 
-
-import pickle
+# save models
 
 with open("C:/Users/emill/PycharmProjects/OWcheaters/script/models/cb_modelv.model", "w+b") as f:
     pickle.dump(cb_modelv, f)
