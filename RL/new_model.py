@@ -61,44 +61,47 @@ def get_state():
 
 class surfenv(Env):
     def __init__(self):
-        self.action_space = spaces.Discrete(3)
+        self.action_space = spaces.Discrete(4)
         self.observation_space = Box(low=np.array([-1000]), high=np.array([1000]), dtype=np.float32)
-        self.state = np.array([0])
-        self.surf_length = 100
+        self.state = 1470
+        self.surf_length = 50
 
     def step(self, action):
         print("ACTION:", action)
         print("SELF_state", self.state)
+        print("SURF_LEN:", self.surf_length)
         if action == 0:
             keys.directKey("A")
         if action == 1:
             keys.directKey("W")
         if action == 2:
             keys.directKey("D")
+        if action == 3:
+            keys.directKey("S")
 
         self.state = get_state()
 
         self.surf_length -= 1
 
-        if self.surf_length <= 0 or float(self.state) > 1650:
+        if self.surf_length <= 0 or float(self.state) > 1750:
             done = True
         else:
             done = False
 
-        if not (self.state is None):
-            if float(self.state) > -450:
-                reward = + 1
-            else:
-                reward = - 1
-            info = {}
+
+        if float(self.state) > 1500:
+            reward = float(self.state) - 1500
         else:
-            print("megafail")
+            reward = float(self.state) - 1500
+
 
         keys.directKey("P", keys.key_release)
         keys.directKey("A", keys.key_release)
         keys.directKey("W", keys.key_release)
         keys.directKey("D", keys.key_release)
-        print(self.state)
+        keys.directKey("S", keys.key_release)
+        info = {}
+        print("DONEEEE",done)
         return self.state, reward, done, info
 
     def reset(self):
@@ -108,7 +111,7 @@ class surfenv(Env):
         keys.directKey("p", keys.key_release)
 
         keys.directKey("k")
-        sleep(0.02)
+        sleep(0.5)
         keys.directKey("k", keys.key_release)
 
         # Rotate camera to default (90,0)
@@ -133,7 +136,9 @@ class surfenv(Env):
         self.state = get_state()
         self.surf_length = 10
         self.state = get_state()"""
+        reward=0
         self.state = get_state()
+        self.surf_length = 50
         print(self.state)
         return self.state
 
@@ -165,21 +170,39 @@ def build_model(states, actions):
 
 
 
-sleep(2)
-episodes = 100
-for episode in range(1, episodes + 1):
-    state = env.reset()
-    done = False
-    score = 0
-
-    while not done:
-        # env.render()
-        action = env.action_space.sample()
-        n_state, reward, done, info = env.step(action)
-        score += reward
-    print('Episode:{} Score:{}'.format(episode, score))
 
 #del model
+
+env = surfenv()
+
+env.observation_space.sample()
+
+#model.summary()
+
+
+model = build_model(states, actions)
+
+from rl.agents import DQNAgent
+from rl.policy import BoltzmannQPolicy
+from rl.memory import SequentialMemory
+
+
+def build_agent(model, actions):
+    policy = BoltzmannQPolicy()
+    memory = SequentialMemory(limit=50000, window_length=1)
+    dqn = DQNAgent(model=model, memory=memory, policy=policy,
+                   nb_actions=actions, nb_steps_warmup=300, target_model_update=1e-2)
+    return dqn
+
+# WHY THE FUCK DOES THIS WORK?
+dqn = build_agent(model, actions)
+try:
+    dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+except:
+    print("wtf")
+
+del model
+
 
 env = surfenv()
 
@@ -206,9 +229,13 @@ def build_agent(model, actions):
 dqn = build_agent(model, actions)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
+
+
+
+
 experimental_run_tf_function = False
 
 
 sleep(4)
-dqn.fit(env, nb_steps=100, visualize=False, verbose=1)
+dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)
 
