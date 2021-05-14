@@ -48,28 +48,27 @@ def mainloop():
 
 
 def get_state():
-    cords = mainloop()
-    x = cords.X
-    z = cords.Z
-    y = cords.Y
-    # vertical = cords.vertical
-    # horizontal = cords.horizontal
-    ret = np.array([x])
-    print(ret[0])
-    return ret[0]
-
+    try:
+        cords = mainloop()
+        x = cords.X
+        z = cords.Z
+        y = cords.Y
+        # vertical = cords.vertical
+        # horizontal = cords.horizontal
+        ret = np.array([z])
+        return ret[0]
+    except:
+        return 0
 
 class surfenv(Env):
     def __init__(self):
         self.action_space = spaces.Discrete(4)
-        self.observation_space = Box(low=np.array([-1000]), high=np.array([1000]), dtype=np.float32)
-        self.state = 1470
-        self.surf_length = 50
+        self.observation_space = Box(low=np.array([-1000]), high=np.array([2000]), dtype=np.float32)
+        self.state = 0
+        self.surf_length = 100
 
     def step(self, action):
-        print("ACTION:", action)
-        print("SELF_state", self.state)
-        print("SURF_LEN:", self.surf_length)
+
         if action == 0:
             keys.directKey("A")
         if action == 1:
@@ -83,17 +82,18 @@ class surfenv(Env):
 
         self.surf_length -= 1
 
-        if self.surf_length <= 0 or float(self.state) > 1750:
+        if self.surf_length <= 0 or float(self.state) < -730:
             done = True
         else:
             done = False
 
 
-        if float(self.state) > 1500:
-            reward = float(self.state) - 1500
+        if float(self.state) > -300:
+            reward = float(self.state) -300
         else:
-            reward = float(self.state) - 1500
+            reward = float(self.state) -300
 
+        print(action,reward)
 
         keys.directKey("P", keys.key_release)
         keys.directKey("A", keys.key_release)
@@ -101,7 +101,6 @@ class surfenv(Env):
         keys.directKey("D", keys.key_release)
         keys.directKey("S", keys.key_release)
         info = {}
-        print("DONEEEE",done)
         return self.state, reward, done, info
 
     def reset(self):
@@ -111,7 +110,7 @@ class surfenv(Env):
         keys.directKey("p", keys.key_release)
 
         keys.directKey("k")
-        sleep(0.5)
+        sleep(0.05)
         keys.directKey("k", keys.key_release)
 
         # Rotate camera to default (90,0)
@@ -138,8 +137,7 @@ class surfenv(Env):
         self.state = get_state()"""
         reward=0
         self.state = get_state()
-        self.surf_length = 50
-        print(self.state)
+        self.surf_length = 100
         return self.state
 
 
@@ -162,9 +160,8 @@ import tensorflow as tf
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(24, activation='relu', input_shape=states))  # states=(1,)
-    # model.add(Flatten())
-    model.add(Dense(24, activation='relu'))
+    model.add(Dense(12, activation='relu', input_shape=states))  # states=(1,)
+    model.add(Dense(6, activation='relu', input_shape=states))  # states=(1,)
     model.add(Dense(actions, activation='linear'))
     return model
 
@@ -222,7 +219,7 @@ def build_agent(model, actions):
     policy = BoltzmannQPolicy()
     memory = SequentialMemory(limit=50000, window_length=1)
     dqn = DQNAgent(model=model, memory=memory, policy=policy,
-                   nb_actions=actions, nb_steps_warmup=10, target_model_update=1e-2)
+                   nb_actions=actions, nb_steps_warmup=300, target_model_update=1e-2)
     return dqn
 
 
@@ -237,5 +234,5 @@ experimental_run_tf_function = False
 
 
 sleep(4)
-dqn.fit(env, nb_steps=5000, visualize=False, verbose=1)
+dqn.fit(env, nb_steps=50000, visualize=False, verbose=100)
 
