@@ -42,7 +42,6 @@ def mainloop():
             vertical = angles[1]
             horizontal = angles[2]
             # keyspressed = key_check()
-    print(coordinates.X)
     listaX.append(float(coordinates.X))
     listaZ.append(float(coordinates.Z))
     return coordinates
@@ -67,7 +66,7 @@ def get_state():
 class surfenv(Env):
     def __init__(self):
         self.action_space = spaces.Discrete(3)
-        self.observation_space = Box(low=np.array([-900,-900]), high=np.array([2000,2000]), dtype=np.float32)
+        self.observation_space = Box(low=np.array([-1000,-900]), high=np.array([1000,2000]), dtype=np.float32)
         self.state = get_state()
         self.surf_length = 200
 
@@ -82,24 +81,29 @@ class surfenv(Env):
         #if action == 3:
             #keys.directKey("S")
 
-        self.state = get_state()
-
-        self.surf_length -= 1
+        returned_state = get_state()
+        if returned_state != 0:
+            self.state = returned_state
+        print(returned_state)
         print(self.state)
-        try:
-            if self.surf_length <= 0 or float(self.state[1]) < -730:
-                done = True
-            else:
-                done = False
-        except:
-            print("cursed error")
+        self.surf_length -= 1
+
+        if self.surf_length <= 0 or float(self.state[1]) < -730 or float(self.state[0]) < -500 or float(self.state[0])> 500:
+            done = True
+        else:
+            done = False
+
 
         if float(self.state[1]) > -500:
-            reward = float(self.state[1]) - 200
+            reward = (float(self.state[1]) - 200) / 100
         else:
-            reward = float(self.state[1]) - 200
+            reward = (float(self.state[1]) - 200) / 100
 
-        print(action,reward)
+        print(action, reward)
+        reward=0
+        done=False
+
+
 
         keys.directKey("P", keys.key_release)
         keys.directKey("A", keys.key_release)
@@ -107,7 +111,6 @@ class surfenv(Env):
         keys.directKey("D", keys.key_release)
         keys.directKey("S", keys.key_release)
         info = {}
-        print(self.state)
         return self.state, reward, done, info
 
     def reset(self):
@@ -144,7 +147,6 @@ class surfenv(Env):
         reward=0
         self.state = get_state()
         self.surf_length = 150
-        print(self.state)
         return self.state
 
 
@@ -168,9 +170,11 @@ import tensorflow as tf
 def build_model(states, actions):
     model = Sequential()
     model.add(Flatten(input_shape=(1,) + env.observation_space.shape))
-    model.add(Dense(24, activation='relu'))  # states=(1,)
-    model.add(Dense(18, activation='relu'))  # states=(1,)
-    model.add(Dense(18, activation='relu'))  # states=(1,)
+    model.add(Dense(256, activation='relu'))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(4, activation='relu'))
+
     model.add(Dense(actions, activation='linear'))
     return model
 
