@@ -120,7 +120,6 @@ class surfenv(Env):
         sleep(0.05)
         keys.directKey("k", keys.key_release)
 
-        # Rotate camera to default (90,0)
         """current_angle = get_state()
 
         current_h = float(current_angle[4])
