@@ -2,7 +2,7 @@ from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
 import random
-
+import csv
 from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
@@ -10,7 +10,7 @@ import random
 import gym
 from gym import spaces
 import time
-
+from time import sleep
 
 def mainloop():
     # THE FOLLOWING COMMAND HAS TO BE PUT INTO CONSOLE. It starts logging your console
@@ -42,11 +42,14 @@ def mainloop():
             vertical = angles[1]
             horizontal = angles[2]
             # keyspressed = key_check()
-
-        return coordinates
+    print(coordinates.X)
+    listaX.append(float(coordinates.X))
+    listaZ.append(float(coordinates.Z))
+    return coordinates
         # SAFETY key will stop the bot
 
-
+listaX=[]
+listaZ=[]
 def get_state():
     try:
         cords = mainloop()
@@ -56,16 +59,18 @@ def get_state():
         # vertical = cords.vertical
         # horizontal = cords.horizontal
         ret = np.array([z])
+
+
         return ret[0]
     except:
         return 0
 
 class surfenv(Env):
     def __init__(self):
-        self.action_space = spaces.Discrete(4)
-        self.observation_space = Box(low=np.array([-1000]), high=np.array([2000]), dtype=np.float32)
-        self.state = 0
-        self.surf_length = 100
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = Box(low=np.array([-900]), high=np.array([2000]), dtype=np.float32)
+        self.state = get_state()
+        self.surf_length = 200
 
     def step(self, action):
 
@@ -75,8 +80,8 @@ class surfenv(Env):
             keys.directKey("W")
         if action == 2:
             keys.directKey("D")
-        if action == 3:
-            keys.directKey("S")
+        #if action == 3:
+            #keys.directKey("S")
 
         self.state = get_state()
 
@@ -88,10 +93,10 @@ class surfenv(Env):
             done = False
 
 
-        if float(self.state) > -300:
-            reward = float(self.state) -300
+        if float(self.state) > -500:
+            reward = float(self.state) - 500
         else:
-            reward = float(self.state) -300
+            reward = float(self.state) - 500
 
         print(action,reward)
 
@@ -137,14 +142,14 @@ class surfenv(Env):
         self.state = get_state()"""
         reward=0
         self.state = get_state()
-        self.surf_length = 100
+        self.surf_length = 150
         return self.state
 
 
 import time
 from keys import Keys
+sleep(3)
 keys = Keys()
-
 env = surfenv()
 states = env.observation_space.shape  # (1,)
 actions = env.action_space.n  # 3
@@ -160,11 +165,11 @@ import tensorflow as tf
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(12, activation='relu', input_shape=states))  # states=(1,)
-    model.add(Dense(6, activation='relu', input_shape=states))  # states=(1,)
+    model.add(Dense(128, activation='relu', input_shape=states))  # states=(1,)
+    model.add(Dense(64, activation='relu'))  # states=(1,)
+    model.add(Dense(32, activation='relu'))  # states=(1,)
     model.add(Dense(actions, activation='linear'))
     return model
-
 
 
 
@@ -176,7 +181,6 @@ env.observation_space.sample()
 
 #model.summary()
 
-
 model = build_model(states, actions)
 
 from rl.agents import DQNAgent
@@ -186,7 +190,7 @@ from rl.memory import SequentialMemory
 
 def build_agent(model, actions):
     policy = BoltzmannQPolicy()
-    memory = SequentialMemory(limit=50000, window_length=1)
+    memory = SequentialMemory(limit=50000, window_length=5)
     dqn = DQNAgent(model=model, memory=memory, policy=policy,
                    nb_actions=actions, nb_steps_warmup=300, target_model_update=1e-2)
     return dqn
@@ -225,14 +229,50 @@ def build_agent(model, actions):
 
 dqn = build_agent(model, actions)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-
-
-
-
-
 experimental_run_tf_function = False
 
 
 sleep(4)
-dqn.fit(env, nb_steps=50000, visualize=False, verbose=100)
+dqn.fit(env, nb_steps=6000, visualize=False, verbose=100)
+print("TESTING")
+print("TESTING")
+print("TESTING")
+print("TESTING")
+sleep(5)
+from rl.agents import DQNAgent
+from rl.policy import BoltzmannQPolicy
+from rl.memory import SequentialMemory
+scores = dqn.test(env, nb_episodes=1, visualize=False)
+#print(np.mean(scores.history['episode_reward']))
+dqn.save_weights('dqn2_weights.h5f', overwrite=True)
 
+print(listaX)
+
+"""def build_agent(model, actions):
+    policy = BoltzmannQPolicy()
+    memory = SequentialMemory(limit=50000, window_length=1)
+    dqn = DQNAgent(model=model, memory=memory, policy=policy,
+                  nb_actions=actions, nb_steps_warmup=10, target_model_update=1e-2)
+    return dqn
+
+def build_model(states, actions):
+    model = Sequential()
+    model.add(Dense(24, activation='relu', input_shape=states))
+    model.add(Dense(24, activation='relu'))
+    model.add(Dense(actions, activation='linear'))
+    return model
+
+env = surfenv()
+actions = env.action_space.n
+states = env.observation_space.shape
+
+model = build_model(states, actions)
+dqn = build_agent(model, actions)
+dqn.load_weights('dqn_weights.h5f')
+dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+_ = dqn.test(env, nb_episodes=2, visualize=True)
+"""
+import matplotlib.pyplot as plt
+
+plt.scatter(x=listaX,y=listaZ)
+plt.show()
