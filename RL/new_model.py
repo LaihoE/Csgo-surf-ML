@@ -58,17 +58,16 @@ def get_state():
         y = cords.Y
         # vertical = cords.vertical
         # horizontal = cords.horizontal
-        ret = np.array([z])
+        ret = np.array([x,z])
 
-
-        return ret[0]
+        return ret
     except:
         return 0
 
 class surfenv(Env):
     def __init__(self):
         self.action_space = spaces.Discrete(3)
-        self.observation_space = Box(low=np.array([-900]), high=np.array([2000]), dtype=np.float32)
+        self.observation_space = Box(low=np.array([-900,-900]), high=np.array([2000,2000]), dtype=np.float32)
         self.state = get_state()
         self.surf_length = 200
 
@@ -86,17 +85,19 @@ class surfenv(Env):
         self.state = get_state()
 
         self.surf_length -= 1
+        print(self.state)
+        try:
+            if self.surf_length <= 0 or float(self.state[1]) < -730:
+                done = True
+            else:
+                done = False
+        except:
+            print("cursed error")
 
-        if self.surf_length <= 0 or float(self.state) < -730:
-            done = True
+        if float(self.state[1]) > -500:
+            reward = float(self.state[1]) - 200
         else:
-            done = False
-
-
-        if float(self.state) > -500:
-            reward = float(self.state) - 500
-        else:
-            reward = float(self.state) - 500
+            reward = float(self.state[1]) - 200
 
         print(action,reward)
 
@@ -106,6 +107,7 @@ class surfenv(Env):
         keys.directKey("D", keys.key_release)
         keys.directKey("S", keys.key_release)
         info = {}
+        print(self.state)
         return self.state, reward, done, info
 
     def reset(self):
@@ -143,6 +145,7 @@ class surfenv(Env):
         reward=0
         self.state = get_state()
         self.surf_length = 150
+        print(self.state)
         return self.state
 
 
@@ -154,7 +157,7 @@ env = surfenv()
 states = env.observation_space.shape  # (1,)
 actions = env.action_space.n  # 3
 print(states)
-
+print(states[0])
 from time import time, sleep
 import numpy as np
 from tensorflow.keras import Sequential
@@ -165,12 +168,12 @@ import tensorflow as tf
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(128, activation='relu', input_shape=states))  # states=(1,)
-    model.add(Dense(64, activation='relu'))  # states=(1,)
-    model.add(Dense(32, activation='relu'))  # states=(1,)
+    model.add(Flatten(input_shape=(1,) + env.observation_space.shape))
+    model.add(Dense(24, activation='relu'))  # states=(1,)
+    model.add(Dense(18, activation='relu'))  # states=(1,)
+    model.add(Dense(18, activation='relu'))  # states=(1,)
     model.add(Dense(actions, activation='linear'))
     return model
-
 
 
 #del model
@@ -233,7 +236,7 @@ experimental_run_tf_function = False
 
 
 sleep(4)
-dqn.fit(env, nb_steps=6000, visualize=False, verbose=100)
+dqn.fit(env, nb_steps=5000, visualize=False, verbose=100)
 print("TESTING")
 print("TESTING")
 print("TESTING")
@@ -274,5 +277,5 @@ _ = dqn.test(env, nb_episodes=2, visualize=True)
 """
 import matplotlib.pyplot as plt
 
-plt.scatter(x=listaX,y=listaZ)
+plt.scatter(x=listaX,y=listaZ,s=2)
 plt.show()
