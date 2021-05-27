@@ -84,8 +84,6 @@ class surfenv(Env):
         returned_state = get_state()
         if returned_state != 0:
             self.state = returned_state
-        print(returned_state)
-        print(self.state)
         self.surf_length -= 1
 
         if self.surf_length <= 0 or float(self.state[1]) < -730 or float(self.state[0]) < -500 or float(self.state[0])> 500:
@@ -94,15 +92,12 @@ class surfenv(Env):
             done = False
 
 
-        if float(self.state[1]) > -500:
-            reward = (float(self.state[1]) - 200) / 100
+        if float(self.state[1]) > -200:
+            reward = (float(self.state[1])+200) / 1000
         else:
-            reward = (float(self.state[1]) - 200) / 100
+            reward = 0
 
-        print(action, reward)
-        reward=0
-        done=False
-
+        print("REWARD:",reward)
 
 
         keys.directKey("P", keys.key_release)
@@ -173,7 +168,6 @@ def build_model(states, actions):
     model.add(Dense(256, activation='relu'))
     model.add(Dense(128, activation='relu'))
     model.add(Dense(64, activation='relu'))
-    model.add(Dense(4, activation='relu'))
 
     model.add(Dense(actions, activation='linear'))
     return model
@@ -229,17 +223,17 @@ def build_agent(model, actions):
     policy = BoltzmannQPolicy()
     memory = SequentialMemory(limit=50000, window_length=1)
     dqn = DQNAgent(model=model, memory=memory, policy=policy,
-                   nb_actions=actions, nb_steps_warmup=300, target_model_update=1e-2)
+                   nb_actions=actions, nb_steps_warmup=100, target_model_update=0.5)
     return dqn
 
 
 dqn = build_agent(model, actions)
-dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+dqn.compile(Adam(lr=0.02), metrics=['mae'])
 experimental_run_tf_function = False
 
 
 sleep(4)
-dqn.fit(env, nb_steps=5000, visualize=False, verbose=100)
+dqn.fit(env, nb_steps=100000, visualize=False, verbose=100)
 print("TESTING")
 print("TESTING")
 print("TESTING")
