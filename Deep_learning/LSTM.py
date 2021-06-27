@@ -24,14 +24,10 @@ listaX=[]
 listaY=[]
 listaZ=[]
 
-npx=np.array([0,0,0])
-
 
 for point in range(round(len(df)/100)):
     index=point*100
     batch=np.array(df.iloc[index])
-    print(batch)
-
 
 
 
@@ -62,4 +58,57 @@ df["SpeedX"]=listaX
 df["SpeedY"]=listaY
 df["SpeedZ"]=listaZ
 
-print(df)
+print(df.columns)
+df = df.drop("keys",axis=1)
+
+
+dfx = df.drop("horizontal",axis=1)
+dfx = dfx.drop("vertical",axis=1)
+
+
+
+dfy = df["vertical"]
+
+
+
+
+training_set = dfx.iloc[:300000].values
+training_sety = dfy.iloc[:300000].values
+
+
+#test_set = df.iloc[800:, 1:2].values
+
+# Creating a data structure with 60 time-steps and 1 output
+X_train = []
+y_train = []
+for i in range(60, 800):
+    X_train.append(training_set[i-60:i])
+    y_train.append(training_sety[i])
+
+X_train, y_train = np.array(X_train), np.array(y_train)
+print(X_train.shape)
+X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 6))
+print(X_train.shape)
+print(X_train[0])
+
+model = Sequential()
+#Adding the first LSTM layer and some Dropout regularisation
+model.add(LSTM(units = 50, return_sequences = True, input_shape = (X_train.shape[1], 6)))
+model.add(Dropout(0.2))
+# Adding a second LSTM layer and some Dropout regularisation
+model.add(LSTM(units = 50, return_sequences = True))
+model.add(Dropout(0.2))
+# Adding a third LSTM layer and some Dropout regularisation
+model.add(LSTM(units = 50, return_sequences = True))
+model.add(Dropout(0.2))
+# Adding a fourth LSTM layer and some Dropout regularisation
+model.add(LSTM(units = 50))
+model.add(Dropout(0.2))
+# Adding the output layer
+model.add(Dense(units = 1))
+
+# Compiling the RNN
+model.compile(optimizer = 'adam', loss = 'mean_squared_error')
+
+# Fitting the RNN to the Training set
+model.fit(X_train, y_train, epochs = 100, batch_size = 2)
